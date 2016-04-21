@@ -143,7 +143,7 @@ if __name__ == '__main__':
             PORT = m.group('port') 
 
         # Generate the Request which will be sent to the HOST
-        REQUEST_STR = ('GET /index.html HTTP/1.1\r\n' + 'Host: ' + HOST + '\r\n' + '\r\n')
+        REQUEST_STR = ('GET / HTTP/1.1\r\n' + 'Host: ' + HOST + '\r\n' + '\r\n')
 
         # Obtain an ACTUAL address from the URL provided
         ADDRESS = socket.gethostbyname(HOST)

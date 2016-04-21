@@ -6,6 +6,7 @@ import os
 import socket
 import sys
 import signal
+import mimetypes
 
 # Constants
 
@@ -83,41 +84,34 @@ class HTTPHandler(BaseHandler):
 
         self._parse_request()
 
-        if os.environ['REQUEST_URI'] == '/favicon.ico':
-            return
-
-        print "\n1.The Requested URI is:", os.environ['REQUEST_URI']
         
         self.uripath = os.path.normpath(DOCROOT + os.environ['REQUEST_URI'])
-        print "2. Path: ", self.uripath
 
         if not os.path.exists(self.uripath):
-            print "3. PATH does not exist"
             self._handle_404error()
 
         elif os.path.isfile(self.uripath) and os.access(self.uripath, os.X_OK):
-            print "3. It is an executable SCRIPT!"
             self._handle_script()
 
         elif os.path.isfile(self.uripath) and os.access(self.uripath, os.R_OK):
-            print "3. It is a readable FILE!"
             self._handle_file()
 
         elif os.path.isdir(self.uripath) and os.access(self.uripath, os.R_OK):
-            print "3. It is a readable DIRECTORY!"
             self._handle_dir()
 
         else:
-            print "3. Error, not a standard file-type"
-
+            self._handle_404error()
 
 
     def _parse_request(self):
         try:
             data = self.stream.readline().rstrip()
+            self.debug('Parsing {}'.format(data))
             if data:
 
                 REQUEST = data.split()
+                self.debug('Parsing {}'.format(REQUEST))
+
                 os.environ['REQUEST_METHOD'] = REQUEST[0]
 
                 tmp    = REQUEST[1].split('?')
@@ -141,22 +135,19 @@ class HTTPHandler(BaseHandler):
                 self.stream.flush()
                 data = self.stream.readline().rstrip()
 
-            # Print The envionrment
-            '''print "Content-Type: text/plain\n\n"
-            for key in os.environ.keys():
-                print "%30s %s \n" % (key,os.environ[key])'''
-
 
         except socket.error:
             pass    # Ignore socket errors
 
     def _handle_404error(self):
+        self.debug('Handle Error')
         self.stream.write('''<!DOCTYPE html><html lang="en"><head><title>404 Error</title></head><body><div class="container"><div class="page-header"><h2>404 Error</h2></div><div class="thumbnail">
             <img src="http://files.sharenator.com/fun_with404_errors_60_uphaa_com-s450x322-82555.jpg" class="img-responsive">
             </div></div></body></html>''')
         self.stream.flush()
 
     def _handle_script(self):
+        self.debug('Handle Script')
         for line in os.popen(self.uripath):
             self.stream.write(line)
         self.stream.flush() 
@@ -164,33 +155,35 @@ class HTTPHandler(BaseHandler):
 
     def _handle_file(self):
 
+        mimetype, _ = mimetypes.guess_type(self.uripath)
+        if mimetype is None:
+            mimetype = 'application/octet-stream'
+
+        self.stream.write('HTTP/1.0 200 OK\r\n')
+        self.stream.write('Content-Type: {}\r\n\r\n'.format(mimetype))
+
+        self.debug('Handle File')
+
         for line in open(self.uripath):
             self.stream.write(line)
         self.stream.flush()
 
     def _handle_dir(self):
-
+        self.debug('Handle Directory')
         dirs = sorted(os.listdir(self.uripath))
-        print "The Directories are:", dirs, type(dirs)
         self.stream.write('''<!DOCTYPE html><html lang="en"><head><title>{path}</title></head><body><div class="container">
                             <div class="page-header"><h2>Directory Listing: {path}</h2></div><table class="table table-striped">
                             <thead><th>Type</th><th>Name</th><th>Size</th></thead><tbody>'''.format( path = os.environ['REQUEST_URI']))
 
         while len(dirs) > 0:
-            print "FILE:", dirs[0]
 
             if os.environ['REQUEST_URI'] != '/':
                 filePath = str(os.environ['REQUEST_URI']) + '/' +str(dirs[0])
             else:
                 filePath = str(os.environ['REQUEST_URI']) + str(dirs[0])
-
-            print "PATH:", filePath
-            print "self.uripath:", self.uripath
-            print "os.environ['REQUEST_URI']:", os.environ['REQUEST_URI']
             if not os.path.isdir(self.uripath + '/' + dirs[0]):
                 fileSize = str(os.path.getsize(self.uripath + '/' + dirs[0])) + ' Bytes'
                 fileType = 'file'
-
             else:
                 fileSize = '-'
                 fileType = 'dir'
@@ -232,13 +225,34 @@ class TCPServer(object):
             self.logger.debug('Accepted connection from {}:{}'.format(*address))
 
             # Instantiate handler, handle connection, finish connection
-            try:
-                handler = self.handler(client, address)
-                handler.handle()
-            except Exception as e:
-                handler.exception('Exception: {}', e)
-            finally:
-                handler.finish()
+            if FORKING == False:
+                try:
+                    handler = self.handler(client, address)
+                    handler.handle()
+                except Exception as e:
+                    handler.exception('Exception: {}', e)
+                finally:
+                    handler.finish()
+            else:
+                try:
+                    try:
+                        pid = os.fork()
+                    except OSError as e:# Error
+                        sys.exit(0) 
+
+                    if pid == 0:    # Child
+                        try:
+                            handler = self.handler(client, address)
+                            handler.handle()
+                        except Exception as e:
+                            handler.exception('Exception: {}', e)
+                        finally:
+                            handler.finish()
+                
+
+                except KeyboardInterrupt:
+                    sys.exit(0)
+
 
 # Main Execution
 
@@ -255,7 +269,7 @@ if __name__ == '__main__':
         elif option == '-v':
             LOGLEVEL = logging.DEBUG
         elif option == '-d':
-            DOCROOT = value
+            DOCROOT = os.getcwd() + '/' + value + '/'
         elif option == '-f':
             FORKING = True
         else:
@@ -271,8 +285,24 @@ if __name__ == '__main__':
     # Instantiate and run server
     server = TCPServer(port=PORT)
 
-    try:
-        server.run()
-    except KeyboardInterrupt:
-        sys.exit(0)
 
+    if FORKING == False:
+        try:
+            server.run()
+        except KeyboardInterrupt:
+            sys.exit(0)
+            self._handle(client, address)
+    else:
+        try:
+            pid = os.fork()
+        except OSError as e:# Error
+            sys.exit(0) 
+
+        try:
+            if pid == 0:    # Child
+                server.run()
+            else: # Parent
+                pid, status = os.wait()
+
+        except KeyboardInterrupt:
+            sys.exit(0)
