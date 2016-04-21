@@ -1,0 +1,60 @@
+\documentclass{article}
+
+\title{Project 01}
+\date{4/21/16}
+\author{Owen Phelan, ophelan1@nd.edu}
+
+\begin{document}
+	\pagenumbering{gobble}
+	\maketitle
+%------------------------------------------------------------------------------
+	\section{Summary}
+	\begin{verbatim}
+As of right now, everything in my project is working except for the thor.py script and the SIGCHLD handling. I cannot for the life of me 
+figure out why SIGCHLD is not a signal that is recognized by my computer. As for the thor.py script, I still need to change up parsing the 
+request url so that I can get an accurate path. I did this project alone because my schedule was crazy around the time the project was assigned
+and so I got around to asking my friends way too late.  
+
+	\end{verbatim}
+%------------------------------------------------------------------------------
+	\section{Latency}
+	\begin{verbatim}
+I tested the throughout return speed by using thor so send 200 requests to the addresses corresponding the files. These are the averages
+I obtained. There is not much of a difference as far as I can tell. I believe there may be an issue with my Thor program.
+
+	\end{verbatim}
+	\begin{table}[h!]
+	    \centering
+	    \begin{tabular}{c|c|c}
+	    Type	& 	 Non-Forking &  Forking\\
+	    \hline
+	    dir		& 	.01 sec 			& 	.02 sec	\\
+	    file		& 	.01 sec 			& 	.02 sec	\\
+	    script	& 	.01 sec			& 	.02 sec 	\\
+	    \end{tabular}
+	    \caption{Test Results}
+	    \label{tbl:Data Results}
+	\end{table}
+%------------------------------------------------------------------------------
+	\section*{Throughout}
+	\begin{verbatim}
+As there is an issue with my thor.py script, I feel there is no reason to investigate this test. Though if I had been able to, I would have sent
+200 processes in 1 request using thor. I then would compare the time differences. Almost inevitably the forking mode should be faster. 
+	\end{verbatim}
+%------------------------------------------------------------------------------
+	\section*{Analysis}
+	\begin{verbatim}
+Unfortunately I was unable to run the necessary tests to do any real analysis. Had I had more time I would have fixed whatever the issue is 
+and run the tests as planned. 
+
+	\end{verbatim}
+	\end{table}
+%------------------------------------------------------------------------------
+	\section{Conclusion}
+	\begin{verbatim}
+I thought this project was really cool, because it gave me a practical understanding of what is happening when I open a web browser. 
+It's fun understanding 'what's under the hood' in a sense. Before this project I had no idea what sockets were, how they functioned, or what was happening every time I made a request to one. Internet security is something I'd like to look into, because it seems like something that would fascinate me, and knowing what is actually happening every time a server is contacted is a fun look into what that kind of work may look like. 
+						
+	\end{verbatim}
+%------------------------------------------------------------------------------
+\end{document}
