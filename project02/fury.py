@@ -52,11 +52,10 @@ if __name__ == '__main__':
 		if task and task.return_status == 0:
 			sys.stdout.write(task.output)
 			sys.stdout.flush()
-
-		JOURNAL[task.command] = task.output.split()
-		with open('journal.json.new', 'w') as stream:
-		    json.dump(JOURNAL, stream)
-		os.rename('journal.json.new', 'journal.json')
+			JOURNAL[task.command] = task.output.split()
+			with open('journal.json.new', 'w') as stream:
+			    json.dump(JOURNAL, stream)
+			os.rename('journal.json.new', 'journal.json')
 
 		
 
